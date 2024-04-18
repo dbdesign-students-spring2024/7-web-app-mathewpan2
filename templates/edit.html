@@ -1,6 +1,6 @@
 {% extends 'base.html' %} {% block container %}
 <h2>Update Note</h2>
-<p>Edit a record in the MongoDB database collection.</p>
+<p>Edit your note.</p>
 <form method="POST" action="{{ url_for('edit_post', mongoid=mongoid) }}">
   <p>Note: <input type="text" id="fnote" name="fnote" /><br /></p>
   <label for="fdate">Due:</label><br />
