@@ -31,7 +31,7 @@
     
     </style>
 <h2>It is currently {{info.weekday}}!</h2>
-<h3>Let's see what you have due this week. </h3>
+<h3>Let's see what you have due this Today. </h3>
 {% for note in info.notes %}
 <div class="note {% if note.completed %}completed{% endif %}" >
     <p class="content">{{ note.note }}</p>
