@@ -1,18 +1,21 @@
 {% extends 'base.html' %} {% block container %}
-<h2>Update</h2>
+<h2>Update Note</h2>
 <p>Edit a record in the MongoDB database collection.</p>
 <form method="POST" action="{{ url_for('edit_post', mongoid=mongoid) }}">
-  <p>
-    Your name:
-    <input type="text" id="fname" name="fname" value="{{doc.name}}" /><br />
-  </p>
-  <p>
-    Message:
-    <textarea id="fmessage" name="fmessage">{{doc.message}}</textarea>
-  </p>
+  <p>Note: <input type="text" id="fnote" name="fnote" /><br /></p>
+  <label for="fdate">Due:</label><br />
+  <select name="fdate" id="fdate">
+    <option value="Monday">Monday</option>
+    <option value="Tuesday">Tuesday</option>
+    <option value="Wednesday">Wednesday</option>
+    <option value="Thursday">Thursday</option>
+    <option value="Friday">Friday</option>
+    <option value="Saturday">Saturday</option>
+    <option value="Sunday">Sunday</option>
+  </select>
   <p>
     <a href="{{ url_for('read')}}">Cancel</a>
-    <input type="submit" name="post-btn" value="Save" />
+    <input type="submit" name="post-btn" value="Post" />
   </p>
 </form>
 {% endblock %}

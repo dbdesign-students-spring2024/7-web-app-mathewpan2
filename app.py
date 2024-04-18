@@ -7,11 +7,11 @@ import datetime
 
 from flask import Flask, render_template, request, redirect, url_for, make_response
 
-# import logging
-import sentry_sdk
-from sentry_sdk.integrations.flask import (
-    FlaskIntegration,
-)  # delete this if not using sentry.io
+# # import logging
+# import sentry_sdk
+# from sentry_sdk.integrations.flask import (
+#     FlaskIntegration,
+# )  # delete this if not using sentry.io
 
 # from markupsafe import escape
 import pymongo
@@ -26,17 +26,17 @@ load_dotenv(override=True)  # take environment variables from .env.
 # initialize Sentry for help debugging... this requires an account on sentrio.io
 # you will need to set the SENTRY_DSN environment variable to the value provided by Sentry
 # delete this if not using sentry.io
-sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN"),
-    # enable_tracing=True,
-    # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
-    traces_sample_rate=1.0,
-    # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.
-    # We recommend adjusting this value in production.
-    profiles_sample_rate=1.0,
-    integrations=[FlaskIntegration()],
-    send_default_pii=True,
-)
+# sentry_sdk.init(
+#     dsn=os.getenv("SENTRY_DSN"),
+#     # enable_tracing=True,
+#     # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+#     traces_sample_rate=1.0,
+#     # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.
+#     # We recommend adjusting this value in production.
+#     profiles_sample_rate=1.0,
+#     integrations=[FlaskIntegration()],
+#     send_default_pii=True,
+# )
 
 # instantiate the app using sentry for debugging
 app = Flask(__name__)
@@ -56,7 +56,6 @@ except ConnectionFailure as e:
     # catch any database errors
     # the ping command failed, so the connection is not available.
     print(" * MongoDB connection error:", e)  # debug
-    sentry_sdk.capture_exception(e)  # send the error to sentry.io. delete if not using
     sys.exit(1)  # this is a catastrophic error, so no reason to continue to live
 
 
@@ -67,9 +66,21 @@ except ConnectionFailure as e:
 def home():
     """
     Route for the home page.
-    Simply returns to the browser the content of the index.html file located in the templates folder.
+    Returns current tasks
     """
-    return render_template("index.html")
+
+    current_day = datetime.datetime.now().strftime("%A")
+
+    notes = db.noted.find({"due": current_day}).sort(
+            "created_at", 1
+    )
+
+    info = {
+        "weekday" : current_day,
+        "notes" : notes
+
+    }
+    return render_template("index.html", info=info)
 
 
 @app.route("/read")
@@ -78,10 +89,24 @@ def read():
     Route for GET requests to the read page.
     Displays some information for the user with links to other pages.
     """
-    docs = db.exampleapp.find({}).sort(
-        "created_at", -1
-    )  # sort in descending order of created_at timestamp
-    return render_template("read.html", docs=docs)  # render the read template
+    schedule = {
+        'Monday': [],
+        'Tuesday': [],
+        'Wednesday': [],
+        'Thursday': [],
+        'Friday': [],
+        'Saturday': [],
+        'Sunday': [],
+    }
+
+    docs = db.noted.find({}).sort(
+            "created_at", 1
+    )
+
+    for doc in docs:
+        schedule[doc['due']].append(doc)
+
+    return render_template("read.html", schedule=schedule)  # render the read template
 
 
 @app.route("/create")
@@ -92,6 +117,20 @@ def create():
     """
     return render_template("create.html")  # render the create template
 
+@app.route("/complete/<mongoid>")
+def complete(mongoid):
+    """
+    Route for GET requests to the complete page.
+    Marks the specified record as completed in the database
+    """
+    db.noted.update_one(
+        {"_id": ObjectId(mongoid)}, {"$set": {"completed": True}}
+    )
+    return redirect(
+        request.referrer
+    )
+
+
 
 @app.route("/create", methods=["POST"])
 def create_post():
@@ -99,12 +138,12 @@ def create_post():
     Route for POST requests to the create page.
     Accepts the form submission data for a new document and saves the document to the database.
     """
-    name = request.form["fname"]
-    message = request.form["fmessage"]
+    note = request.form["fnote"]
+    date = request.form["fdate"]
 
     # create a new document with the data the user entered
-    doc = {"name": name, "message": message, "created_at": datetime.datetime.utcnow()}
-    db.exampleapp.insert_one(doc)  # insert a new document
+    doc = {"note": note, "due": date, "created_at": datetime.datetime.utcnow(), "completed": False}
+    db.noted.insert_one(doc)  # insert a new document
 
     return redirect(
         url_for("read")
@@ -120,7 +159,7 @@ def edit(mongoid):
     Parameters:
     mongoid (str): The MongoDB ObjectId of the record to be edited.
     """
-    doc = db.exampleapp.find_one({"_id": ObjectId(mongoid)})
+    doc = db.noted.find_one({"_id": ObjectId(mongoid)})
     return render_template(
         "edit.html", mongoid=mongoid, doc=doc
     )  # render the edit template
@@ -135,23 +174,18 @@ def edit_post(mongoid):
     Parameters:
     mongoid (str): The MongoDB ObjectId of the record to be edited.
     """
-    name = request.form["fname"]
-    message = request.form["fmessage"]
+    note = request.form["fnote"]
+    date = request.form["fdate"]
 
-    doc = {
-        # "_id": ObjectId(mongoid),
-        "name": name,
-        "message": message,
-        "created_at": datetime.datetime.utcnow(),
-    }
+    doc = {"note": note, "due": date, "created_at": datetime.datetime.utcnow(), "completed": False}
 
-    db.exampleapp.update_one(
+    db.noted.update_one(
         {"_id": ObjectId(mongoid)}, {"$set": doc}  # match criteria
     )
 
     return redirect(
         url_for("read")
-    )  # tell the browser to make a request for the /read route
+    )  
 
 
 @app.route("/delete/<mongoid>")
@@ -163,11 +197,10 @@ def delete(mongoid):
     Parameters:
     mongoid (str): The MongoDB ObjectId of the record to be deleted.
     """
-    db.exampleapp.delete_one({"_id": ObjectId(mongoid)})
+    db.noted.delete_one({"_id": ObjectId(mongoid)})
     return redirect(
-        url_for("read")
-    )  # tell the web browser to make a request for the /read route.
-
+        request.referrer
+    )  
 
 @app.route("/webhook", methods=["POST"])
 def webhook():

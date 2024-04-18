@@ -1,11 +1,60 @@
 {% extends 'base.html' %}
 
 {% block container %}
-<h2>Welcome!</h2>
-<p>Welcome to the Flask app. This is the home page. Here are a few links to example pages you might find interesting.
-    <ul>
-        <li><a href="{{ url_for('read')}}">a page that displays information pulled from a MongoDB database collection</a></li>
-        <li><a href="{{ url_for('create')}}">a page with a form you can submit to create a new record in a MongoDB collection</a></li>
-    </ul>
-</p>
+
+<style>
+    .note {
+      width: 300px;
+      border: 1px solid black;
+      padding: 10px;
+    }
+    
+    .note .content {
+      margin-bottom: 10px;
+    }
+    
+    .note hr {
+      border: 0;
+      height: 1px;
+      background: #333;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .completed {
+        opacity: 0.5; 
+    }
+    
+    </style>
+<h2>It is currently {{info.weekday}}!</h2>
+<h3>Let's see what you have due this week. </h3>
+{% for note in info.notes %}
+<div class="note {% if note.completed %}completed{% endif %}" >
+    <p class="content">{{ note.note }}</p>
+    <hr>
+    <p>Posted at: {{ note.created_at }}</p>
+    <div class="hidden">
+   <a href="{{url_for('complete',mongoid=note._id)}}">Mark as Done</a> | <a href="{{ url_for('edit',mongoid=note._id)}}">Edit</a> | <a href="{{ url_for('delete',mongoid=note._id)}}">Delete</a> 
+    </div>
+</div>
+
+{% else %}
+    <p>No notes for today! Or did you forget something?</p>
+{% endfor %}
+
+<script>
+    document.querySelectorAll('.note').forEach(note => {
+    
+        note.addEventListener('mouseover', () => {
+            note.querySelector('div').classList.toggle('hidden');
+        });
+        note.addEventListener('mouseout', () => {
+            note.querySelectorAll('div').forEach(a => a.classList.add('hidden'));
+        });
+    });
+</script>
 {% endblock %}

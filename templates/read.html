@@ -1,23 +1,62 @@
 {% extends 'base.html' %}
 
 {% block container %}
+
+<style>
+.note {
+  width: 300px;
+  border: 1px solid black;
+  padding: 10px;
+}
+
+.note .content {
+  margin-bottom: 10px;
+}
+
+.note hr {
+  border: 0;
+  height: 1px;
+  background: #333;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.hidden {
+  display: none;
+}
+
+.completed {
+    opacity: 0.5; 
+}
+
+</style>
 <h2>Read</h2>
-<p>This page shows information pulled from a MongoDB database collection.
-        
-    {% for doc in docs %}
-    <div>
-        <hr class="solid">
-        <p class="post">
-            Posted by {{doc.name}} at {{ doc.created_at.strftime("%H:%M on %d %B %Y") }}
-            <br/>
-            <a href="{{ url_for('edit',mongoid=doc._id)}}">Edit</a> | <a href="{{ url_for('delete',mongoid=doc._id)}}">Delete</a>
-            <br/>
-        </p>
-        <p>
-            {{ doc.message }}
-        </p>
+<p>Your todo List for the week.
+    {% for day, notes in schedule.items() %}
+    <h1>{{ day }}'s Notes</h1>
+    {% for note in notes %}
+        <div class="note {% if note.completed %}completed{% endif %}" >
+            <p class="content">{{ note.note }}</p>
+            <hr>
+            <p>Posted at: {{ note.created_at }}</p>
+            <div class="hidden">
+           <a href="{{url_for('complete',mongoid=note._id)}}">Mark as Done</a> | <a href="{{ url_for('edit',mongoid=note._id)}}">Edit</a> | <a href="{{ url_for('delete',mongoid=note._id)}}">Delete</a> 
+            </div>
             
-    </div>
-    {%endfor%}
+        </div>
+    {% endfor %}
+{% endfor %}
 </p>
+
+<script>
+    document.querySelectorAll('.note').forEach(note => {
+    
+        note.addEventListener('mouseover', () => {
+            note.querySelector('div').classList.toggle('hidden');
+        });
+        note.addEventListener('mouseout', () => {
+            note.querySelectorAll('div').forEach(a => a.classList.add('hidden'));
+        });
+    });
+</script>
 {% endblock %}
