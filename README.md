@@ -6,8 +6,13 @@
 Noted is an app that allows you to take notes on things you want to keep a mind on throughout the week. The app allows you to create notes, mark them as done, edit them, or delete the notes once you feel it no longer necessary to have it around (hovering over the notes reveal the edit, delete, and mark option).
 
 
+### Home Screen
 ![image](images/1.PNG)
+
+### Schedule View
 ![image](images/2.PNG)
+
+### Creating a new note
 ![image](images/3.PNG)
 
 
