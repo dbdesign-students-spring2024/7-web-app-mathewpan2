@@ -36,7 +36,7 @@
 <div class="note {% if note.completed %}completed{% endif %}" >
     <p class="content">{{ note.note }}</p>
     <hr>
-    <p>Posted at: {{ note.created_at }}</p>
+    <p>Created at: {{ note.created_at }}</p>
     <div class="hidden">
    <a href="{{url_for('complete',mongoid=note._id)}}">Mark as Done</a> | <a href="{{ url_for('edit',mongoid=note._id)}}">Edit</a> | <a href="{{ url_for('delete',mongoid=note._id)}}">Delete</a> 
     </div>
